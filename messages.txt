@@ -1,5 +1,6 @@
+Visit https://github.com/phillip-alter/ for cool stuff like this bot.
 You can use the !help command to view all available commands.
 Use the !discord command to connect to our Discord server.
 To add a task, use !addtask <task>.
 Please be patient with Ceed if he doesn't see your message while in a working sprint.
-Give CeedTheMedicore a follow if you enjoy coworking or body doubling streams! 
+Give CeedTheMedicore a follow if you enjoy coworking or body doubling streams!
