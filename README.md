@@ -1,7 +1,13 @@
 # Taskpybot
 A Twitch bot that has a task list. Chatters can add, remove, and complete tasks from their own personal list.
 
-Originally based on Kichi779's Twitch Chat Bot. Please visit https://github.com/Kichi779/Twitch-Chat-Bot for the original.
+This project is derived from Twitch Chat Bot by Kichi779, available at https://github.com/Kichi779/Twitch-Chat-Bot .
+
+The original project is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+Significant changes have been made to the original codebase in this project. See the commit history and specific file modifications for details.
 
 ## Setting up
 1. Edit the settings.json.
