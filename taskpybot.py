@@ -7,8 +7,9 @@ import random
 import json
 from colorama import Fore
 from pystyle import Center, Colors, Colorate
+import listdisplay as ld
 
-os.system(f"title Taskpybot v0.1")
+os.system(f"title Taskpybot v0.2")
 
 con = sqlite3.connect("TaskBotDb.db")
 cur = con.cursor()
