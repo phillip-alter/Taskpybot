@@ -137,6 +137,10 @@ async def handle_command(command, chat, user):
         chat.send(f"PRIVMSG #{channel} :@{user} https://discord.gg/z5aqkzkkBy \n".encode("utf-8"))
     elif command.startswith("!lurk"):
         chat.send(f"PRIVMSG #{channel} :@{user} is now being reprogrammed. \n".encode("utf-8"))
+    #elif command to end stream
+    #   verify user saying command is the channel owner
+    #   clear out completed tasks
+    #   give fun message saying good job or whatever
 
 def get_user_id(user):
     cur.execute('''
