@@ -13,7 +13,7 @@ Significant changes have been made to the original codebase in this project. See
 1. Edit the settings.json.
     * Replace your_channel_name with your channel's name.
     * Replace 60 with your desired interval. This is 60 seconds by default.
-    * Add your oauth token. If you don't have one, visit www.twitchtokengenerator.com on a new account to get one.
+    * Add your oauth token. If you don't have one, visit www.twitchtokengenerator.com on a new Twitch account to get one.
 2. Edit messages.txt and replace with whatever random messages you want the bot to send in your chat. 
     * The bot will choose a random message from this list and send it every (interval) amount of seconds.
 3. Run install.bat
