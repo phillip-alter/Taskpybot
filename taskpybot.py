@@ -119,15 +119,24 @@ async def handle_command(command, chat, user):
         chat.send(f"PRIVMSG #{channel} :Removing '{task}' from {user}'s list \n".encode("utf-8"))
         print(f"(handle_command) Removing {task} from {user}'s list\n")
         remove_task(user,task)
-    elif command.startswith("!completetask"):
+    elif command.startswith("!completetask "):
         task = command[len("!completetask "):]
-        chat.send(f"PRIVMSG #{channel} :Completing '{task}' from {user}'s list! Good job! \n".encode("utf-8"))
-        print(f"(handle_command) Completing '{task}' for {user}")
-        complete_task(user,task)
+        print(f"(handle_command) Attempting to complete '{task}' for {user}")
+        result = complete_task(user,task)
+        print(f"(handle_command) Result of the complete task is {result}")
+        if result:
+            chat.send(f"PRIVMSG #{channel} :Completing '{task}' from {user}'s list! Good job! \n".encode("utf-8"))
+        else:
+            chat.send(f"PRIVMSG #{channel} :Unable to complete '{task}' from {user}'s list. Did you check your capitalization and spelling? \n".encode("utf-8"))
+    elif command.startswith("!cleartasks"):
+        print(f"Clearing list for {user}")
+        clear_tasks(user)
     elif command.startswith("!help"):
         chat.send(f"PRIVMSG #{channel} :Use !addtask <task> to add tasks. Use !removetask <task> to remove. Use !completetask <task> to complete. \n".encode("utf-8"))
     elif command.startswith("!discord"):
         chat.send(f"PRIVMSG #{channel} :@{user} https://discord.gg/z5aqkzkkBy \n".encode("utf-8"))
+    elif command.startswith("!lurk"):
+        chat.send(f"PRIVMSG #{channel} :@{user} is now being reprogrammed. \n".encode("utf-8"))
 
 def get_user_id(user):
     cur.execute('''
@@ -138,25 +147,6 @@ def get_user_id(user):
     result = cur.fetchone()
     return result
 
-def get_tasklist_id(user):
-    user_id_result = get_user_id(user)
-    if user_id_result:
-        user_id = user_id_result[0]
-        cur.execute('''
-            SELECT TaskListID
-            FROM Users
-            WHERE Id = ?
-        ''', (user_id,))
-        result = cur.fetchone()
-        if result:
-            return result[0]
-        else:
-            print(f"Error: Could not find TaskListID for user '{user}'.")
-            return None
-    else:
-        print(f"Error: User '{user}' not found.")
-        return None
-
 def add_user(user):
     if get_user_id(user) is None:
         cur.execute('''
@@ -164,10 +154,6 @@ def add_user(user):
             VALUES (?);
         ''', (user,))
         new_user_id = cur.lastrowid
-        cur.execute('''
-            INSERT INTO TaskList (UserID)
-            VALUES (?);
-        ''', (new_user_id,))
         con.commit()
         return new_user_id
     else:
@@ -175,13 +161,14 @@ def add_user(user):
         return get_user_id(user)[0]
     
 def complete_task(user, task_description):
-    tasklist_id = get_tasklist_id(user)
-    if tasklist_id is not None:
+    user_id_result = get_user_id(user)
+    if user_id_result is not None:
+        user_id = user_id_result[0]
         cur.execute('''
             SELECT Id, IsCompleted
             FROM Tasks
-            WHERE TaskDescription = ? AND TaskListID = ?;
-        ''', (task_description, tasklist_id))
+            WHERE TaskDescription = ? AND UserID = ?;
+        ''', (task_description, user_id))
         task_info = cur.fetchone()
         if task_info:
             task_id = task_info[0]
@@ -194,46 +181,54 @@ def complete_task(user, task_description):
             ''', (new_completion_status, task_id))
             con.commit()
             print(f"Task '{task_description}' for user '{user}' completion status updated to {new_completion_status}.")
+            return True
         else:
             print(f"No task with description '{task_description}' found for user '{user}'.")
+            return False
     else:
-        print(f"Error: Could not find task list for user '{user}'.")
+        print(f"Error: Could not find '{user}'.")
+        return False
 
 def remove_task(user, task_description):
-    tasklist_id = get_tasklist_id(user)
-    if tasklist_id is not None:
+    user_id_result = get_user_id(user)
+    if user_id_result is not None:
+        user_id = user_id_result[0]
         cur.execute('''
             DELETE FROM Tasks
-            WHERE TaskDescription = ? AND TaskListID = ?;
-        ''', (task_description, tasklist_id))
+            WHERE TaskDescription = ? AND UserID = ?;
+        ''', (task_description, user_id))
         con.commit()
-        if cur.rowcount > 0:
-            print(f"Task '{task_description}' for user '{user}' has been removed.")
-        else:
-            print(f"No task with description '{task_description}' found for user '{user}'.")
+        print(f"Task '{task_description}' for user '{user}' has been removed.")
     else:
-        print(f"Error: Could not find task list for user '{user}'.")
+        print(f"Error: Could not find '{user}'.")
+
+def clear_tasks(user):
+    user_id_result = get_user_id(user)
+    if user_id_result is not None:
+        user_id = user_id_result[0]
+        cur.execute('''
+            SELECT TaskDescription
+            FROM Tasks
+            WHERE UserID = ?
+        ''',(user_id,))
+        results = cur.fetchall()
+        if results is not None:
+            for r in results:
+                remove_task(user, r[0])
+            con.commit()
+    else:
+        print(f"Error: could not find {user}")
 
 def add_task(user, task_description):
     user_id_result = get_user_id(user)
     if user_id_result is not None:
         user_id = user_id_result[0]
         cur.execute('''
-            SELECT TaskListID
-            FROM Users
-            WHERE Id = ?;
-        ''', (user_id,))
-        result = cur.fetchone()
-        if result:
-            task_list_id = result[0]
-            cur.execute('''
-                INSERT INTO Tasks (TaskListID, TaskDescription, IsCompleted)
-                VALUES (?, ?, 0);
-            ''', (task_list_id, task_description))
-            con.commit()
-            print(f"Task '{task_description}' added for user '{user}' (ID: {user_id})")
-        else:
-            print(f"Error: Could not retrieve TaskListID for user '{user}'.")
+            INSERT INTO Tasks (UserID, TaskDescription, IsCompleted)
+            VALUES (?, ?, 0);
+        ''', (user_id, task_description))
+        con.commit()
+        print(f"Task '{task_description}' added for user '{user}' (ID: {user_id})")
     else:
         new_user_id = add_user(user)
         if new_user_id:
