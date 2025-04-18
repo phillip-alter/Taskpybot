@@ -1,0 +1,5 @@
+{
+    "channel":"your_channelname_here",
+    "interval":"60",
+    "oauth":"oauth:your_oauth_here_twitchtokengenerator.com"
+}

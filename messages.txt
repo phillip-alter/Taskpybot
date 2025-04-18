@@ -1,0 +1,5 @@
+You can use the !help command to view all available commands.
+Use the !discord command to connect to our Discord server.
+To add a task, use !addtask <task> or !at <task> .
+Please be patient with Ceed if he doesn't see your message while in a working sprint.
+Give Ceed a follow if you enjoy coworking or body doubling streams! 
