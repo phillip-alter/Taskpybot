@@ -1,3 +1,3 @@
 @echo off
-color a
-py taskpybot.py
+start "Taskpybot" py taskpybot.py
+start "ListDisplay" py listdisplay.py
