@@ -5,7 +5,7 @@ import sqlite3
 import asyncio
 import random
 import json
-from colorama import Fore
+import requests
 from pystyle import Center, Colors, Colorate
 import listdisplay as ld
 
@@ -186,6 +186,7 @@ def complete_task(user, task_description):
             ''', (new_completion_status, task_id))
             con.commit()
             print(f"Task '{task_description}' for user '{user}' completion status updated to {new_completion_status}.")
+            notify_ui()
             return True
         else:
             print(f"No task with description '{task_description}' found for user '{user}'.")
@@ -204,6 +205,7 @@ def remove_task(user, task_description):
         ''', (task_description, user_id))
         con.commit()
         print(f"Task '{task_description}' for user '{user}' has been removed.")
+        notify_ui()
     else:
         print(f"Error: Could not find '{user}'.")
 
@@ -221,6 +223,7 @@ def clear_tasks(user):
             for r in results:
                 remove_task(user, r[0])
             con.commit()
+            notify_ui()
     else:
         print(f"Error: could not find {user}")
 
@@ -234,12 +237,20 @@ def add_task(user, task_description):
         ''', (user_id, task_description))
         con.commit()
         print(f"Task '{task_description}' added for user '{user}' (ID: {user_id})")
+        notify_ui()
     else:
         new_user_id = add_user(user)
         if new_user_id:
             add_task(user, task_description)
         else:
             print(f"Error: Could not add user '{user}', cannot add task.")
+
+def notify_ui():
+    try:
+        response = requests.get("http://localhost:8080/trigger_refresh", timeout=2)
+        print(f"(notify_ui) UI refresh triggered: {response.status_code}")
+    except Exception as e:
+        print(f"(notify_ui) Failed to contact UI: {e}")
 
 async def main():
     chat = await connect_to_chat()
