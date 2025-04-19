@@ -131,12 +131,8 @@ async def handle_command(command, chat, user):
     elif command.startswith("!cleartasks"):
         print(f"Clearing list for {user}")
         clear_tasks(user)
-    elif command.startswith("!help"):
+    elif command.startswith("!taskhelp"):
         chat.send(f"PRIVMSG #{channel} :Use !addtask <task> to add tasks. Use !removetask <task> to remove. Use !completetask <task> to complete. \n".encode("utf-8"))
-    elif command.startswith("!discord"):
-        chat.send(f"PRIVMSG #{channel} :@{user} https://discord.gg/z5aqkzkkBy \n".encode("utf-8"))
-    elif command.startswith("!lurk"):
-        chat.send(f"PRIVMSG #{channel} :@{user} is now being reprogrammed. \n".encode("utf-8"))
     #elif !deletetasks <user>
     #   verify user saying command is a mod
     #   remove user's tasks
