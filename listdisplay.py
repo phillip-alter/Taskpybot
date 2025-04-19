@@ -5,20 +5,6 @@ from nicegui import ui
 
 ui.page_title('Task List')
 
-'''
-@TODO:
-
-At start:
-1. Connect to database.
-2. Pull each user and create a new tasklist for each user.
-3. Pull each user's tasks and add them to their respective task list.
-4. Disconnect from DB (if req'd)
-
-When bot receives a command to add, remove, update, or clear:
-1. Bot calls function in this file, passing in proper parameters for the user & task.
-2. functions will add/remove/modify/clear 
-'''
-
 @dataclass
 class Task:
     name: str
@@ -68,23 +54,24 @@ def todo_ui(tasklist):
                 #ui.button(on_click=lambda task_list=tasklist, current_item=item: task_list.remove(current_item),icon='delete').props('flat fab-mini color=grey')
 
 
-
-cur.execute('''
-    SELECT u.Username, t.TaskDescription, t.IsCompleted
-    FROM Users u
-    JOIN Tasks t ON u.Id = t.UserID
-''')
-results = cur.fetchall()
-user_tasks = {}
-if results is not None:
-    for username, task_description, is_completed in results:
-        if username not in user_tasks:
-            user_tasks[username] = []
-        user_tasks[username].append(Task(task_description,bool(is_completed)))
-for username, tasks in user_tasks.items():
-    userlist = TaskList(username,on_change=todo_ui.refresh)
-    userlist.items.extend(tasks)
-    tasklists.append(userlist)
+def update_from_db():
+    cur.execute('''
+        SELECT u.Username, t.TaskDescription, t.IsCompleted
+        FROM Users u
+        JOIN Tasks t ON u.Id = t.UserID
+    ''')
+    results = cur.fetchall()
+    user_tasks = {}
+    if results is not None:
+        for username, task_description, is_completed in results:
+            if username not in user_tasks:
+                user_tasks[username] = []
+            user_tasks[username].append(Task(task_description,bool(is_completed)))
+    for username, tasks in user_tasks.items():
+        userlist = TaskList(username,on_change=todo_ui.refresh)
+        userlist.items.extend(tasks)
+        tasklists.append(userlist)
+    tasklists_container.refresh()
 
 
 def update_ui_tasklists():
@@ -134,7 +121,16 @@ def rotate_tasklists():
         curr_index['value'] = (curr_index['value'] + 1) % len(tasklists)
         tasklists_container.refresh()
 
+@ui.page('/trigger_refresh')
+def trigger_refresh():
+    print("Received external refresh trigger")
+    tasklists.clear()
+    update_from_db()
+    tasklists_container.refresh()
+    return 'UI refreshed'
+
 # generate the app and set up timers
+update_from_db()
 with ui.column() as container:
     tasklists_container()
 ui.timer(5.0,autoscroll, immediate=False)
