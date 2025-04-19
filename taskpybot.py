@@ -162,7 +162,7 @@ async def handle_command(command, chat, user,is_mod=False):
             print(f"(handle_command) Deleting all tasks for {target}")
             # remove user's tasks
             clear_tasks(target)
-            chat.send(f"PRIVMSG #{channel} :All messages for {target} deleted.\n".encode("utf-8"))
+            chat.send(f"PRIVMSG #{channel} :All tasks for {target} deleted.\n".encode("utf-8"))
         else:
             chat.send(f"PRIVMSG #{channel} :{user}, you do not have permission to use that command.\n".encode("utf-8"))
     #elif !endstream
