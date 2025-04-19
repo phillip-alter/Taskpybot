@@ -153,25 +153,18 @@ async def handle_command(command, chat, user,is_mod=False):
         clear_tasks(user)
     elif command.startswith("!taskhelp"):
         chat.send(f"PRIVMSG #{channel} :Use !addtask <task> to add tasks. Use !removetask <task> to remove. Use !completetask <task> to complete. \n".encode("utf-8"))
-    # elif !deletetasks <user>
     elif command.startswith("!deletetasks "):
-        # verify user saying command is a mod
         if is_mod:
             target = command[len("!deletetasks @"):]
             print(f"(handle_command) Deleting all tasks for {target}")
-            # remove user's tasks
             clear_tasks(target)
             chat.send(f"PRIVMSG #{channel} :All tasks for {target} deleted.\n".encode("utf-8"))
         else:
             chat.send(f"PRIVMSG #{channel} :{user}, you do not have permission to use that command.\n".encode("utf-8"))
-    #elif !endstream
     elif command.startswith("!endstream"):
-        #   verify user saying command is a mod
         if is_mod:
-            #   clear out completed tasks
             clear_completed()
             chat.send(f"PRIVMSG #{channel} :All completed tasks for all users removed.\n".encode("utf-8"))
-            #   shut down bot and web server (shutdown command)
             notify_shutdown()
             sys.exit(0)
    
