@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 from dataclasses import dataclass, field
 from typing import Callable, List
 from nicegui import app, ui
@@ -132,8 +133,7 @@ def trigger_refresh():
 @ui.page('/trigger_shutdown')
 def trigger_shutdown():
     print("Received external shutdown trigger")
-    app.shutdown
-
+    sys.exit(0)
 
 # generate the app and set up timers
 update_from_db()
