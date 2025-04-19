@@ -1,4 +1,5 @@
 import os
+import sys
 import socket
 import select
 import sqlite3
@@ -56,6 +57,7 @@ async def connect_to_chat():
         chat.send(f"PASS {oauth}\n".encode("utf-8"))
         chat.send(f"NICK {botname}\n".encode("utf-8"))
         chat.send(f"JOIN #{channel}\n".encode("utf-8"))
+        chat.send(f"CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership\n".encode("utf-8"))
         await asyncio.sleep(1)
         print(f"(connect_to_chat) Successfully connected to #{channel}")
         return chat
@@ -90,15 +92,30 @@ async def monitor_commands(chat):
                         print("(monitor_commands) Connection closed by server.")
                         break
                     lines = data.strip().split('\n')
+                    print(lines)
                     for line in lines:
-                        if "PRIVMSG" in line:
+                        if "PING" in line:
+                            pong_reply = f"PONG {line.split()[1]}\r\n"
+                            chat.sendall(pong_reply.encode('utf-8'))
+                            print("Pong sent!")
+                        elif "PRIVMSG" in line:
                             parts = line.split()
-                            user = parts[0].split('!')[0][1:]
+                            mod_check = parts[0]
+                            is_mod = False
+                            if 'mod=1' in mod_check:
+                                is_mod = True
+                                print("user is a mod")
+                            elif 'broadcaster' in mod_check:
+                                is_mod = True
+                                print("user is broadcaster")
+                            else:
+                                print("user is neither a broadcaster nor a mod")
+                            user = parts[1].split('!')[0][1:]
                             user.strip()
-                            message = " ".join(parts[3:])[1:]
+                            message = " ".join(parts[4:])[1:]
                             print(f"<{user}> {message}")
                             if message.startswith("!"):
-                                await handle_command(message,chat,user)
+                                await handle_command(message,chat,user,is_mod)
                 else:
                     await asyncio.sleep(0.1) 
             except socket.error as e:
@@ -108,7 +125,11 @@ async def monitor_commands(chat):
     except Exception as e:
         print(f"(monitor_commands) An error occurred: {e}")
 
-async def handle_command(command, chat, user):
+def get_mods(chat):
+    chat.send(f"PRIVMSG #{channel} :/names CeedTheMediocre\n".encode("utf-8"))
+
+
+async def handle_command(command, chat, user,is_mod=False):
     if command.startswith("!addtask "):
         task = command[len("!addtask "):]
         chat.send(f"PRIVMSG #{channel} :Adding '{task}' to {user}'s list \n".encode("utf-8"))
@@ -133,13 +154,30 @@ async def handle_command(command, chat, user):
         clear_tasks(user)
     elif command.startswith("!taskhelp"):
         chat.send(f"PRIVMSG #{channel} :Use !addtask <task> to add tasks. Use !removetask <task> to remove. Use !completetask <task> to complete. \n".encode("utf-8"))
-    #elif !deletetasks <user>
-    #   verify user saying command is a mod
-    #   remove user's tasks
+    # elif !deletetasks <user>
+    elif command.startswith("!deletetasks "):
+        # verify user saying command is a mod
+        if is_mod:
+            target = command[len("!deletetasks @"):]
+            print(f"(handle_command) Deleting all tasks for {target}")
+            # remove user's tasks
+            clear_tasks(target)
+            chat.send(f"PRIVMSG #{channel} :All messages for {target} deleted.\n".encode("utf-8"))
+        else:
+            chat.send(f"PRIVMSG #{channel} :{user}, you do not have permission to use that command.\n".encode("utf-8"))
     #elif !endstream
-    #   verify user saying command is a mod
-    #   clear out completed tasks
-    #   shut down bot and web server (shutdown command)
+    elif command.startswith("!endstream"):
+        #   verify user saying command is a mod
+        if is_mod:
+            #   clear out completed tasks
+            clear_completed()
+            chat.send(f"PRIVMSG #{channel} :All completed tasks for all users removed.\n".encode("utf-8"))
+            #   shut down bot and web server (shutdown command)
+            notify_shutdown()
+            sys.exit(0)
+   
+    
+    
 
 def get_user_id(user):
     cur.execute('''
@@ -225,6 +263,14 @@ def clear_tasks(user):
     else:
         print(f"Error: could not find {user}")
 
+def clear_completed():
+    cur.execute('''
+        DELETE FROM Tasks
+        WHERE IsCompleted = 1
+    ''',)
+    con.commit()
+    notify_ui()
+
 def add_task(user, task_description):
     user_id_result = get_user_id(user)
     if user_id_result is not None:
@@ -247,6 +293,13 @@ def notify_ui():
     try:
         response = requests.get("http://localhost:8080/trigger_refresh", timeout=2)
         print(f"(notify_ui) UI refresh triggered: {response.status_code}")
+    except Exception as e:
+        print(f"(notify_ui) Failed to contact UI: {e}")
+
+def notify_shutdown():
+    try:
+        response = requests.get("http://localhost:8080/trigger_shutdown", timeout=2)
+        print(f"(notify_ui) UI shutdown triggered: {response.status_code}")
     except Exception as e:
         print(f"(notify_ui) Failed to contact UI: {e}")
 
