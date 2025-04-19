@@ -1,7 +1,7 @@
 import sqlite3
 from dataclasses import dataclass, field
 from typing import Callable, List
-from nicegui import ui
+from nicegui import app, ui
 
 ui.page_title('Task List')
 
@@ -128,6 +128,12 @@ def trigger_refresh():
     update_from_db()
     tasklists_container.refresh()
     return 'UI refreshed'
+
+@ui.page('/trigger_shutdown')
+def trigger_shutdown():
+    print("Received external shutdown trigger")
+    app.shutdown
+
 
 # generate the app and set up timers
 update_from_db()
