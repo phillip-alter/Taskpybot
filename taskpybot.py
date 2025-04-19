@@ -11,9 +11,6 @@ import listdisplay as ld
 
 os.system(f"title Taskpybot v0.8")
 
-con = sqlite3.connect("TaskBotDb.db")
-cur = con.cursor()
-
 print(Colorate.Vertical(Colors.blue_to_purple, Center.XCenter("""
 $$$$$$$$\                  $$\                           $$\                  $$\     
 \__$$  __|                 $$ |                          $$ |                 $$ |    
@@ -29,6 +26,8 @@ $$$$$$$$\                  $$\                           $$\                  $$
     by Phillip Alter                               https://github.com/phillip-alter/
 """)))
 
+con = sqlite3.connect("TaskBotDb.db")
+cur = con.cursor()
 server = "irc.chat.twitch.tv"
 port = 6667
 with open("settings.json","r") as file:
