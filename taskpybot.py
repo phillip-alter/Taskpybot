@@ -23,7 +23,7 @@ $$$$$$$$\                  $$\                           $$\                  $$
                                      $$ |      $$\   $$ |                             
                                      $$ |      \$$$$$$  |                             
                                      \__|       \______/                              
-    by Phillip Alter                               https://github.com/phillip-alter/
+    by Phillip Alter        (task-pie-bot)          https://github.com/phillip-alter/
 """)))
 
 con = sqlite3.connect("TaskBotDb.db")
