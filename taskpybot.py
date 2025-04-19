@@ -9,7 +9,7 @@ import json
 import requests
 from pystyle import Center, Colors, Colorate
 
-os.system(f"title Taskpybot v0.8")
+os.system(f"title Taskpybot v1.0.0")
 
 print(Colorate.Vertical(Colors.blue_to_purple, Center.XCenter("""
 $$$$$$$$\                  $$\                           $$\                  $$\     
