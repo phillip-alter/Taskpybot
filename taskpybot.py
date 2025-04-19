@@ -8,7 +8,6 @@ import random
 import json
 import requests
 from pystyle import Center, Colors, Colorate
-import listdisplay as ld
 
 os.system(f"title Taskpybot v0.8")
 

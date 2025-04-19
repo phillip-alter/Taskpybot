@@ -4,7 +4,7 @@
 
 Taskpybot is a Twitch bot designed to enhance viewer engagement by allowing chatters to manage their own personal task lists directly within your channel's chat. Viewers can easily add, remove, and mark tasks as complete, fostering a sense of organization and interaction within your community.
 
-**This project is a derivative of the excellent [Twitch Chat Bot](https://github.com/Kichi779/Twitch-Chat-Bot) by Kichi779.** I extend my most sincere gratitude to Kichi779 for providing the foundational codebase.
+**This project is a derivative of the excellent [Twitch Chat Bot](https://github.com/Kichi779/Twitch-Chat-Bot) by Kichi779.** I extend my most sincere gratitude to Kichi779 for providing the foundational codebase and idea.
 
 ## License
 
