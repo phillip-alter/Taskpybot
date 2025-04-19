@@ -9,7 +9,7 @@ import requests
 from pystyle import Center, Colors, Colorate
 import listdisplay as ld
 
-os.system(f"title Taskpybot v0.2")
+os.system(f"title Taskpybot v0.8")
 
 con = sqlite3.connect("TaskBotDb.db")
 cur = con.cursor()
