@@ -1,11 +1,12 @@
 import sqlite3
-import asyncio
 from dataclasses import dataclass, field
 from typing import Callable, List
 from nicegui import ui
 
+ui.page_title('Task List')
+
 '''
-Todo:
+@TODO:
 
 At start:
 1. Connect to database.
@@ -16,16 +17,7 @@ At start:
 When bot receives a command to add, remove, update, or clear:
 1. Bot calls function in this file, passing in proper parameters for the user & task.
 2. functions will add/remove/modify/clear 
-
-When idle:
-* List should constantly scroll up and down
-    * Moderately slow pace.
-    * Pause briefly when at bottom and top.
-    * When user adds a new item, scroll to that user then resume scrolling up/down after brief pause
 '''
-
-con = sqlite3.connect("TaskBotDb.db")
-cur = con.cursor()
 
 @dataclass
 class Task:
@@ -45,8 +37,14 @@ class TaskList:
     def remove(self,item: Task) -> None:
         self.items.remove(item)
         self.on_change()
+        update_ui_tasklists()
 
+con = sqlite3.connect("TaskBotDb.db") # database connection
+cur = con.cursor() # cursor to traverse the db
 tasklists: List[TaskList] = []
+tasklists_to_remove: List[TaskList] = [] # used to store tasklists that will be deleted
+curr_index = {'value':0} # used for the rotation function 
+skipper: int = 1 # used for timing later, when it comes to autoscroller/rotation.    
 
 @ui.refreshable
 def todo_ui(tasklist):
@@ -66,53 +64,80 @@ def todo_ui(tasklist):
                     ui.html('<s>' + item.name + '</s>').classes('flex-grow')
                 else:
                     ui.label(item.name).classes('flex-grow')
-                ui.button(on_click=lambda task_list=tasklist, current_item=item: task_list.remove(current_item),icon='delete').props('flat fab-mini color=grey') #item=item: tasklist.remove(item), icon='delete').props('flat fab-mini color=grey')
+                # delete button below for testing/troubleshooting 
+                #ui.button(on_click=lambda task_list=tasklist, current_item=item: task_list.remove(current_item),icon='delete').props('flat fab-mini color=grey')
 
-tasklists_to_remove: List[TaskList] = []
+
+
+cur.execute('''
+    SELECT u.Username, t.TaskDescription, t.IsCompleted
+    FROM Users u
+    JOIN Tasks t ON u.Id = t.UserID
+''')
+results = cur.fetchall()
+user_tasks = {}
+if results is not None:
+    for username, task_description, is_completed in results:
+        if username not in user_tasks:
+            user_tasks[username] = []
+        user_tasks[username].append(Task(task_description,bool(is_completed)))
+for username, tasks in user_tasks.items():
+    userlist = TaskList(username,on_change=todo_ui.refresh)
+    userlist.items.extend(tasks)
+    tasklists.append(userlist)
+
 
 def update_ui_tasklists():
+    global tasklists_to_remove
     for t in tasklists_to_remove:
         if t in tasklists:
             tasklists.remove(t)
     tasklists_to_remove = []
-    container.refresh()
 
 @ui.refreshable
 def tasklists_container():
-    for t in tasklists:
-        todo_ui(t)
+    if tasklists:
+        with ui.column().style('height: 300px; overflow-y: auto;').props('id=scrollable_container'):
+            todo_ui(tasklists[curr_index['value']])
 
-# example tasks. unnecessary, but good for reference
-todos = TaskList('My Weekend', on_change=todo_ui.refresh)
-todos.add('Order pizza', completed=True)
-todos.add('New NiceGUI Release')
-todos.add('Clean the house') 
-todos.add('Call mom')
+def autoscroll():
+    global skipper
+    if skipper % 2 == 1:
+        if tasklists:
+            ui.run_javascript(f"""
+            const container = document.getElementById('scrollable_container');
+            if (container) {{
+                const scrollHeight = container.scrollHeight;
+                const clientHeight = container.clientHeight;
+                const maxScrollTop = scrollHeight - clientHeight;
+                let currentScrollTop = container.scrollTop;
+                const scrollStep = 3; //higher = faster
+                const scrollInterval = 20; //lower = faster
 
-todos2 = TaskList('Testing List 2', on_change=todo_ui.refresh)
-todos2.add('Eat pizza')
-todos2.add('Finish bot')
-todos2.add('Clean the house....again')
-todos2.add('call myself')
+                const scrollDown = () => {{
+                    currentScrollTop += scrollStep;
+                    if (currentScrollTop >= maxScrollTop) {{
+                        container.scrollTop = maxScrollTop;
+                    }} else {{
+                        container.scrollTop = currentScrollTop;
+                        setTimeout(scrollDown, scrollInterval);
+                    }}
+                }};
 
-todos3 = TaskList('Testing List 3', on_change=todo_ui.refresh)
-todos3.add('Eat pizza')
-todos3.add('Finish bot')
-todos3.add('Clean the house....again')
-todos3.add('call myself')
+                scrollDown();
+            }}
+            """)
+    skipper = (skipper + 1) % 2
 
-todos4 = TaskList('Testing List 4', on_change=todo_ui.refresh)
-todos4.add('Eat pizza')
-todos4.add('Finish bot')
-todos4.add('Clean the house....again')
-todos4.add('call myself')
+def rotate_tasklists():
+    if tasklists:
+        curr_index['value'] = (curr_index['value'] + 1) % len(tasklists)
+        tasklists_container.refresh()
 
-tasklists.extend([todos,todos2,todos3,todos4])
-
-#handles the generation of the list
+# generate the app and set up timers
 with ui.column() as container:
     tasklists_container()
-
+ui.timer(5.0,autoscroll, immediate=False)
+ui.timer(10.0, rotate_tasklists, immediate=False)  
 if __name__ in {'__main__', '__mp_main__'}: 
-    ui.run() 
-
+    ui.run()
